@@ -16,13 +16,12 @@ terraform {
     }
   }
 
-  # Remote backend configuration (GCS bucket)
-  # backend "gcs" {
-  #   # bucket, prefix must be provided via -backend-config or environment variables
-  # }
-  # Local backend for development
-  backend "local" {
-    path = "terraform.tfstate"
+  cloud {
+    organization = "AdmanCorp"
+
+    workspaces {
+      name = "admancorp-gcp-gke"
+    }
   }
 }
 

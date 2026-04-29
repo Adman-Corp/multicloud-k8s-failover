@@ -22,22 +22,25 @@ Alternatively, use Azure CLI (`az login`).
 
 ## Remote State Backend
 
-The configuration uses Azure Blob Storage for remote state. To enable:
-
-1. Create a storage account and container in Azure.
-2. Uncomment the `backend "azurerm"` block in `provider.tf`.
-3. Create `backend.tfvars` with values:
+The configuration uses Terraform Cloud for remote state management. The `terraform` block in `provider.tf` is already configured with:
 
 ```hcl
-resource_group_name  = "tfstate"
-storage_account_name = "tfstate<random>"
-container_name       = "tfstate"
-key                  = "multicloud-aks.tfstate"
+cloud {
+  organization = "AdmanCorp"
+
+  workspaces {
+    name = "admancorp-github-iac"
+  }
+}
 ```
 
-4. Run `terraform init -backend-config=backend.tfvars`.
+To use Terraform Cloud:
 
-For local development, the local backend is configured by default.
+1. Ensure you're logged into Terraform Cloud CLI (`terraform login`)
+2. Run `terraform init` to initialize with Terraform Cloud backend
+3. Terraform will automatically use the remote workspace for state storage
+
+For local development, you can switch to local backend by commenting out the `cloud` block and using `backend "local"`.
 
 ## Usage
 

@@ -20,14 +20,12 @@ terraform {
     }
   }
 
-  # Remote backend configuration (Azure Blob Storage)
-  # backend "azurerm" {
-  #   # Partial configuration: resource group, storage account, container, key
-  #   # must be provided via -backend-config or environment variables
-  # }
-  # Local backend for development
-  backend "local" {
-    path = "terraform.tfstate"
+  cloud {
+    organization = "AdmanCorp"
+
+    workspaces {
+      name = "admancorp-azure-aks"
+    }
   }
 }
 
