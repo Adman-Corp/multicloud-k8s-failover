@@ -1,0 +1,4 @@
+# Example backend configuration for GCP remote state
+# Copy to backend.tfvars and fill in values
+bucket = "tfstate-multicloud-gke"
+prefix = "terraform/state"

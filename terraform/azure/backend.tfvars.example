@@ -1,0 +1,6 @@
+# Example backend configuration for Azure remote state
+# Copy to backend.tfvars and fill in values
+resource_group_name  = "tfstate"
+storage_account_name = "tfstate${random_id}"
+container_name       = "tfstate"
+key                  = "multicloud-aks.tfstate"

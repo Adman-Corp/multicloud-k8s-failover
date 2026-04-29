@@ -1,0 +1,25 @@
+# Local Terraform directories
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+*.log
+
+# Ignore sensitive files
+terraform.tfvars
+backend.tfvars
+
+# SSH keys (if generated)
+*.pem
+*.pub
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
