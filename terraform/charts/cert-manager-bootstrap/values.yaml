@@ -1,0 +1,7 @@
+issuer:
+  name: letsencrypt-production
+  email: change-me@example.com
+  server: https://acme-v02.api.letsencrypt.org/directory
+  privateKeySecretName: letsencrypt-production-account-key
+  cloudflareSecretName: cloudflare-api-token
+  cloudflareSecretKey: apiToken

@@ -67,6 +67,41 @@ variable "argocd_hostname" {
   default     = null
 }
 
+variable "argocd_certificate_name" {
+  description = "cert-manager Certificate name for Argo CD server TLS"
+  type        = string
+  default     = "argocd-server-tls"
+}
+
+variable "cert_manager_chart_version" {
+  description = "cert-manager Helm chart version"
+  type        = string
+  default     = "v1.20.2"
+}
+
+variable "cert_manager_namespace" {
+  description = "Namespace where cert-manager is installed"
+  type        = string
+  default     = "cert-manager"
+}
+
+variable "cert_manager_acme_email" {
+  description = "ACME email address used by cert-manager for Let's Encrypt"
+  type        = string
+}
+
+variable "cert_manager_cluster_issuer_name" {
+  description = "ClusterIssuer name for Let's Encrypt"
+  type        = string
+  default     = "letsencrypt-production"
+}
+
+variable "cert_manager_acme_server" {
+  description = "ACME directory URL used by cert-manager"
+  type        = string
+  default     = "https://acme-v02.api.letsencrypt.org/directory"
+}
+
 # Node pool configuration
 variable "node_count" {
   description = "Number of worker nodes in the default node pool"

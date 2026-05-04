@@ -2,8 +2,9 @@ project_id = "adman-k8s-failover-uat-260502"
 region     = "us-central1"
 zone       = "us-central1-a"
 
-cluster_name       = "mc-gke-uat"
-kubernetes_version = "1.35"
+cluster_name            = "mc-gke-uat"
+kubernetes_version      = "1.35"
+cert_manager_acme_email = "younesse.adman+gcp@gmail.com"
 
 node_count        = 1
 node_machine_type = "e2-small"

@@ -80,6 +80,26 @@ output "external_dns_helm_chart_version" {
   value       = helm_release.external_dns.version
 }
 
+output "cert_manager_namespace" {
+  description = "Namespace where cert-manager is installed"
+  value       = helm_release.cert_manager.namespace
+}
+
+output "cert_manager_helm_chart_version" {
+  description = "cert-manager Helm chart version"
+  value       = helm_release.cert_manager.version
+}
+
+output "cert_manager_cluster_issuer_name" {
+  description = "ClusterIssuer name used by cert-manager"
+  value       = var.cert_manager_cluster_issuer_name
+}
+
+output "argocd_certificate_name" {
+  description = "cert-manager Certificate name for Argo CD server TLS"
+  value       = var.argocd_certificate_name
+}
+
 output "argocd_namespace" {
   description = "Namespace where Argo CD is installed"
   value       = helm_release.argocd.namespace

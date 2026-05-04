@@ -8,10 +8,12 @@ This repository now includes a minimal Argo CD bootstrap for both dev clusters:
 - GCP GKE dev
 
 Terraform installs the cluster bootstrap components before GitOps takes over.
-For the dev clusters this now includes `external-dns` first, then Argo CD in
-the `argocd` namespace. The Argo CD server service is exposed as a
-`LoadBalancer`, and the service can be published through Cloudflare by
-`external-dns`.
+For the dev clusters this now includes `external-dns` and `cert-manager`
+before Argo CD in the `argocd` namespace. `cert-manager` is bootstrapped with a
+Cloudflare-backed DNS-01 `ClusterIssuer` for Let's Encrypt, and Terraform also
+creates an `argocd-server-tls` `Certificate` in the `argocd` namespace. The
+Argo CD server service is exposed as a `LoadBalancer`, and the service can be
+published through Cloudflare by `external-dns`.
 
 ## Repository Layout
 
@@ -40,9 +42,10 @@ After Terraform has applied successfully, apply the root application:
 kubectl apply -f gitops/clusters/azure-dev/root-application.yaml
 ```
 
-Azure dev also bootstraps `external-dns` before Argo CD. When the Cloudflare
-token and hostname inputs are set, Terraform annotates the Argo CD server
-service so `external-dns` can publish `argocd.az.admancorp.com`.
+Azure dev also bootstraps `external-dns` and `cert-manager` before Argo CD.
+When the Cloudflare token and hostname inputs are set, Terraform creates the
+Let's Encrypt DNS-01 `ClusterIssuer` and annotates the Argo CD server service
+so `external-dns` can publish `argocd.az.admancorp.com`.
 
 ## GCP Dev
 
@@ -52,9 +55,10 @@ After Terraform has applied successfully, apply the root application:
 kubectl apply -f gitops/clusters/gcp-dev/root-application.yaml
 ```
 
-GCP dev also bootstraps `external-dns` before Argo CD. When the Cloudflare
-token and hostname inputs are set, Terraform annotates the Argo CD server
-service so `external-dns` can publish `argocd.gcp.admancorp.com`.
+GCP dev also bootstraps `external-dns` and `cert-manager` before Argo CD. When
+the Cloudflare token and hostname inputs are set, Terraform creates the Let's
+Encrypt DNS-01 `ClusterIssuer` and annotates the Argo CD server service so
+`external-dns` can publish `argocd.gcp.admancorp.com`.
 
 ## Initial Admin Password
 
@@ -72,5 +76,4 @@ They do not yet create the operator applications under:
 - `gitops/platform/azure/dev`
 - `gitops/platform/gcp/dev`
 
-That is where External Secrets, External DNS, and the Keycloak operator should
-be layered in next.
+That is where the remaining platform operators should be layered in next.
