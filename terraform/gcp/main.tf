@@ -155,6 +155,14 @@ resource "google_container_node_pool" "primary_nodes" {
   }
 }
 
+resource "kubernetes_namespace" "external_dns" {
+  metadata {
+    name = var.external_dns_namespace
+  }
+
+  depends_on = [google_container_node_pool.primary_nodes]
+}
+
 resource "kubernetes_secret" "external_dns_cloudflare_api_token" {
   metadata {
     name      = "cloudflare-api-token"
@@ -167,7 +175,7 @@ resource "kubernetes_secret" "external_dns_cloudflare_api_token" {
 
   type = "Opaque"
 
-  depends_on = [google_container_node_pool.primary_nodes]
+  depends_on = [kubernetes_namespace.external_dns]
 }
 
 resource "helm_release" "external_dns" {
@@ -176,7 +184,7 @@ resource "helm_release" "external_dns" {
   chart            = "external-dns"
   version          = var.external_dns_chart_version
   namespace        = var.external_dns_namespace
-  create_namespace = true
+  create_namespace = false
 
   set {
     name  = "provider.name"
