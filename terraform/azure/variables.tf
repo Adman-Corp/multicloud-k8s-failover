@@ -36,7 +36,7 @@ variable "node_count" {
 variable "node_vm_size" {
   description = "VM size for worker nodes"
   type        = string
-  default     = "Standard_B2s"
+  default     = "Standard_DC2as_v5"
 }
 
 # Network configuration

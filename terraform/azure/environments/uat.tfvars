@@ -4,7 +4,7 @@ cluster_name        = "mc-aks-uat"
 kubernetes_version  = "1.34"
 
 node_count   = 1
-node_vm_size = "Standard_B2s"
+node_vm_size = "Standard_DC2as_v5"
 
 vnet_name             = "mc-aks-vnet-uat"
 subnet_name           = "mc-aks-subnet-uat"
