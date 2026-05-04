@@ -1,0 +1,282 @@
+name: Terraform Deploy
+
+on:
+  pull_request:
+    paths:
+      - "terraform/**/*.tf"
+      - "terraform/**/*.tfvars"
+      - "terraform/**/*.tfvars.*"
+      - "terraform/**/.terraform.lock.hcl"
+  push:
+    branches:
+      - main
+    paths:
+      - "terraform/**/*.tf"
+      - "terraform/**/*.tfvars"
+      - "terraform/**/*.tfvars.*"
+      - "terraform/**/.terraform.lock.hcl"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        default: prod
+        type: choice
+        options:
+          - dev
+          - uat
+          - prod
+      target:
+        description: "Terraform stack to run"
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - azure
+          - gcp
+      action:
+        description: "Terraform action"
+        required: true
+        default: apply
+        type: choice
+        options:
+          - plan
+          - apply
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+env:
+  TF_INPUT: false
+  TF_IN_AUTOMATION: true
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - stack: azure
+            working_directory: terraform/azure
+            workspace_name_prefix: admancorp-azure-aks
+          - stack: gcp
+            working_directory: terraform/gcp
+            workspace_name_prefix: admancorp-gcp-gke
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ matrix.working_directory }}
+
+    env:
+      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      GCP_SERVICE_ACCOUNT_EMAIL: ${{ vars.GCP_SERVICE_ACCOUNT_EMAIL }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      TFE_TOKEN: ${{ secrets.TF_API_TOKEN }}
+      TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+      TF_ENVIRONMENT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'dev' }}
+
+    steps:
+      - name: Filter matrix by manual target
+        id: filter
+        working-directory: .
+        run: |
+          if [[ "${{ github.event_name }}" != "workflow_dispatch" ]]; then
+            echo "selected=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "${{ github.event.inputs.target }}" == "all" || "${{ github.event.inputs.target }}" == "${{ matrix.stack }}" ]]; then
+            echo "selected=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "selected=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout repository
+        if: steps.filter.outputs.selected == 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        if: steps.filter.outputs.selected == 'true'
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Authenticate to Azure
+        if: steps.filter.outputs.selected == 'true' && matrix.stack == 'azure'
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.ARM_CLIENT_ID }}
+          tenant-id: ${{ secrets.ARM_TENANT_ID }}
+          subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+
+      - name: Authenticate to Google Cloud
+        if: steps.filter.outputs.selected == 'true' && matrix.stack == 'gcp'
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Validate required credentials
+        if: steps.filter.outputs.selected == 'true'
+        run: |
+          if [[ "${{ matrix.stack }}" == "azure" ]]; then
+            for name in ARM_CLIENT_ID ARM_SUBSCRIPTION_ID ARM_TENANT_ID TF_TOKEN_app_terraform_io; do
+              if [[ -z "${!name}" ]]; then
+                echo "Missing required secret: $name" >&2
+                exit 1
+              fi
+            done
+          fi
+
+          if [[ "${{ matrix.stack }}" == "gcp" ]]; then
+            for name in GCP_WORKLOAD_IDENTITY_PROVIDER GCP_SERVICE_ACCOUNT_EMAIL TF_TOKEN_app_terraform_io; do
+              if [[ -z "${!name}" ]]; then
+                echo "Missing required secret: $name" >&2
+                exit 1
+              fi
+            done
+          fi
+
+      - name: Select Terraform Cloud workspace
+        if: steps.filter.outputs.selected == 'true' && github.event_name != 'pull_request'
+        run: echo "TF_WORKSPACE=${{ matrix.workspace_name_prefix }}-${TF_ENVIRONMENT}" >> "$GITHUB_ENV"
+
+      - name: Terraform fmt check
+        if: steps.filter.outputs.selected == 'true'
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init
+        if: steps.filter.outputs.selected == 'true' && github.event_name != 'pull_request'
+        run: terraform init
+
+      - name: Terraform validate
+        if: steps.filter.outputs.selected == 'true' && github.event_name != 'pull_request'
+        run: terraform validate
+
+      - name: Terraform plan
+        id: plan
+        if: steps.filter.outputs.selected == 'true' && github.event_name != 'pull_request'
+        run: terraform plan -no-color -input=false -var-file="environments/${TF_ENVIRONMENT}.tfvars"
+
+      - name: Terraform plan for PR environments
+        id: pr-plan
+        if: steps.filter.outputs.selected == 'true' && github.event_name == 'pull_request'
+        run: |
+          overall_status=0
+          rm -rf pr-artifacts
+          mkdir -p pr-artifacts
+          : > pr-plan-summary.md
+          for env_name in dev uat prod; do
+            artifact_dir="pr-artifacts/${env_name}"
+            workspace_name="${{ matrix.workspace_name_prefix }}-${env_name}"
+            mkdir -p "$artifact_dir"
+            printf '## %s\n\n' "$env_name" >> pr-plan-summary.md
+            if ! TF_WORKSPACE="$workspace_name" terraform init -input=false -no-color > "$artifact_dir/init.txt" 2>&1; then
+              overall_status=1
+              printf -- '- init failed\n\n' >> pr-plan-summary.md
+              continue
+            fi
+            if ! TF_WORKSPACE="$workspace_name" terraform validate -no-color > "$artifact_dir/validate.txt" 2>&1; then
+              overall_status=1
+              printf -- '- validate failed\n\n' >> pr-plan-summary.md
+              continue
+            fi
+
+            set +e
+            TF_WORKSPACE="$workspace_name" terraform plan -detailed-exitcode -no-color -input=false -out="$artifact_dir/tfplan" -var-file="environments/${env_name}.tfvars" > "$artifact_dir/plan.txt" 2>&1
+            plan_exit=$?
+            set -e
+
+            if [[ "$plan_exit" -eq 1 ]]; then
+              overall_status=1
+              printf -- '- plan failed\n\n' >> pr-plan-summary.md
+              continue
+            fi
+
+            terraform show -json "$artifact_dir/tfplan" > "$artifact_dir/plan.json"
+            add_count=$(jq '[.resource_changes[]? | select(.change.actions | index("create"))] | length' "$artifact_dir/plan.json")
+            change_count=$(jq '[.resource_changes[]? | select(.change.actions | index("update"))] | length' "$artifact_dir/plan.json")
+            delete_count=$(jq '[.resource_changes[]? | select(.change.actions | index("delete"))] | length' "$artifact_dir/plan.json")
+
+            printf -- '- add: %s\n' "$add_count" >> pr-plan-summary.md
+            printf -- '- change: %s\n' "$change_count" >> pr-plan-summary.md
+            printf -- '- delete: %s\n\n' "$delete_count" >> pr-plan-summary.md
+          done
+
+          printf 'Terraform PR plan summary:\n\n'
+          cat pr-plan-summary.md
+          exit "$overall_status"
+
+      - name: Upload PR plan artifacts
+        id: upload-pr-artifacts
+        if: always() && steps.filter.outputs.selected == 'true' && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ matrix.stack }}
+          path: ${{ matrix.working_directory }}/pr-artifacts
+          if-no-files-found: warn
+
+      - name: Terraform apply (Azure)
+        if: steps.filter.outputs.selected == 'true' && matrix.stack == 'azure' && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply'))
+        run: terraform apply -auto-approve -input=false -var-file="environments/${TF_ENVIRONMENT}.tfvars"
+
+      - name: Terraform apply (GCP)
+        if: steps.filter.outputs.selected == 'true' && matrix.stack == 'gcp' && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply'))
+        run: terraform apply -auto-approve -input=false -var-file="environments/${TF_ENVIRONMENT}.tfvars"
+
+      - name: Comment PR with plan output
+        if: always() && steps.filter.outputs.selected == 'true' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = `<!-- terraform-plan:${{ matrix.stack }} -->`;
+            const planPath = `${process.env.GITHUB_WORKSPACE}/${{ matrix.working_directory }}/pr-plan-summary.md`;
+            const artifactUrl = 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ steps.upload-pr-artifacts.outputs.artifact-id }}';
+            const planOutput = fs.existsSync(planPath)
+              ? fs.readFileSync(planPath, 'utf8')
+              : 'Plan summary was not generated. Check the workflow logs and artifacts for details.';
+            const body = [
+              marker,
+              `Terraform plan summary for \`${{ matrix.stack }}\`.`,
+              '',
+              `Job status: \`${{ job.status }}\``,
+              '',
+              `[View artifact \`terraform-plan-${{ matrix.stack }}\`](${artifactUrl})`,
+              '',
+              `Working directory: \`${{ matrix.working_directory }}\``,
+              '',
+              planOutput,
+            ].join('\n');
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(comment =>
+              comment.user.type === 'Bot' && comment.body.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+              return;
+            }
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
