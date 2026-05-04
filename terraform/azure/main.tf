@@ -105,6 +105,107 @@ resource "azurerm_kubernetes_cluster" "main" {
   # }
 }
 
+resource "kubernetes_secret" "external_dns_cloudflare_api_token" {
+  metadata {
+    name      = "cloudflare-api-token"
+    namespace = var.external_dns_namespace
+  }
+
+  data = {
+    apiToken = var.external_dns_cloudflare_api_token
+  }
+
+  type = "Opaque"
+
+  depends_on = [azurerm_kubernetes_cluster.main]
+}
+
+resource "helm_release" "external_dns" {
+  name             = "external-dns"
+  repository       = "https://kubernetes-sigs.github.io/external-dns/"
+  chart            = "external-dns"
+  version          = var.external_dns_chart_version
+  namespace        = var.external_dns_namespace
+  create_namespace = true
+
+  set {
+    name  = "provider.name"
+    value = "cloudflare"
+  }
+
+  set {
+    name  = "policy"
+    value = "upsert-only"
+  }
+
+  set {
+    name  = "registry"
+    value = "txt"
+  }
+
+  set {
+    name  = "txtOwnerId"
+    value = azurerm_kubernetes_cluster.main.name
+  }
+
+  dynamic "set" {
+    for_each = var.external_dns_domain_filters
+    content {
+      name  = "domainFilters[${set.key}]"
+      value = set.value
+    }
+  }
+
+  dynamic "set" {
+    for_each = var.external_dns_cloudflare_zone_id == null ? [] : [var.external_dns_cloudflare_zone_id]
+    content {
+      name  = "extraArgs.zone-id-filter"
+      value = set.value
+    }
+  }
+
+  set {
+    name  = "env[0].name"
+    value = "CF_API_TOKEN"
+  }
+
+  set {
+    name  = "env[0].valueFrom.secretKeyRef.name"
+    value = kubernetes_secret.external_dns_cloudflare_api_token.metadata[0].name
+  }
+
+  set {
+    name  = "env[0].valueFrom.secretKeyRef.key"
+    value = "apiToken"
+  }
+
+  depends_on = [kubernetes_secret.external_dns_cloudflare_api_token]
+}
+
+resource "helm_release" "argocd" {
+  name             = "argocd"
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  version          = "9.5.11"
+  namespace        = "argocd"
+  create_namespace = true
+
+  set {
+    name  = "server.service.type"
+    value = "LoadBalancer"
+  }
+
+  dynamic "set" {
+    for_each = var.argocd_hostname == null ? [] : [var.argocd_hostname]
+    content {
+      name  = "server.service.annotations.external-dns\\.alpha\\.kubernetes\\.io/hostname"
+      value = set.value
+    }
+  }
+
+  depends_on = [helm_release.external_dns]
+}
+
 # Role assignment for managed identity (if needed)
 # resource "azurerm_role_assignment" "aks_network" {
 #   principal_id         = azurerm_kubernetes_cluster.main.identity[0].principal_id

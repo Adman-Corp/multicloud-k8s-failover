@@ -70,6 +70,26 @@ output "workload_identity_pool" {
   value       = "${var.project_id}.svc.id.goog"
 }
 
+output "external_dns_namespace" {
+  description = "Namespace where external-dns is installed"
+  value       = helm_release.external_dns.namespace
+}
+
+output "external_dns_helm_chart_version" {
+  description = "External DNS Helm chart version"
+  value       = helm_release.external_dns.version
+}
+
+output "argocd_namespace" {
+  description = "Namespace where Argo CD is installed"
+  value       = helm_release.argocd.namespace
+}
+
+output "argocd_helm_chart_version" {
+  description = "Argo CD Helm chart version"
+  value       = helm_release.argocd.version
+}
+
 output "node_pool_name" {
   description = "Name of the node pool"
   value       = google_container_node_pool.primary_nodes.name

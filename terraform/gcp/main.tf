@@ -29,6 +29,13 @@ resource "google_compute_subnetwork" "subnet" {
   }
 }
 
+data "google_container_engine_versions" "gke" {
+  provider       = google-beta
+  project        = var.project_id
+  location       = var.zone
+  version_prefix = "${var.kubernetes_version}."
+}
+
 # GKE cluster
 resource "google_container_cluster" "primary" {
   provider = google-beta
@@ -109,8 +116,8 @@ resource "google_container_node_pool" "primary_nodes" {
   project    = var.project_id
   location   = var.zone
   cluster    = google_container_cluster.primary.name
-  node_count = var.node_count
-  version    = var.kubernetes_version
+  initial_node_count = var.node_count
+  version    = data.google_container_engine_versions.gke.latest_node_version
 
   node_config {
     machine_type = var.node_machine_type
@@ -142,6 +149,111 @@ resource "google_container_node_pool" "primary_nodes" {
     min_node_count = 1
     max_node_count = 3
   }
+
+  lifecycle {
+    ignore_changes = [initial_node_count]
+  }
+}
+
+resource "kubernetes_secret" "external_dns_cloudflare_api_token" {
+  metadata {
+    name      = "cloudflare-api-token"
+    namespace = var.external_dns_namespace
+  }
+
+  data = {
+    apiToken = var.external_dns_cloudflare_api_token
+  }
+
+  type = "Opaque"
+
+  depends_on = [google_container_node_pool.primary_nodes]
+}
+
+resource "helm_release" "external_dns" {
+  name             = "external-dns"
+  repository       = "https://kubernetes-sigs.github.io/external-dns/"
+  chart            = "external-dns"
+  version          = var.external_dns_chart_version
+  namespace        = var.external_dns_namespace
+  create_namespace = true
+
+  set {
+    name  = "provider.name"
+    value = "cloudflare"
+  }
+
+  set {
+    name  = "policy"
+    value = "upsert-only"
+  }
+
+  set {
+    name  = "registry"
+    value = "txt"
+  }
+
+  set {
+    name  = "txtOwnerId"
+    value = google_container_cluster.primary.name
+  }
+
+  dynamic "set" {
+    for_each = var.external_dns_domain_filters
+    content {
+      name  = "domainFilters[${set.key}]"
+      value = set.value
+    }
+  }
+
+  dynamic "set" {
+    for_each = var.external_dns_cloudflare_zone_id == null ? [] : [var.external_dns_cloudflare_zone_id]
+    content {
+      name  = "extraArgs.zone-id-filter"
+      value = set.value
+    }
+  }
+
+  set {
+    name  = "env[0].name"
+    value = "CF_API_TOKEN"
+  }
+
+  set {
+    name  = "env[0].valueFrom.secretKeyRef.name"
+    value = kubernetes_secret.external_dns_cloudflare_api_token.metadata[0].name
+  }
+
+  set {
+    name  = "env[0].valueFrom.secretKeyRef.key"
+    value = "apiToken"
+  }
+
+  depends_on = [kubernetes_secret.external_dns_cloudflare_api_token]
+}
+
+resource "helm_release" "argocd" {
+  name             = "argocd"
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  version          = "9.5.11"
+  namespace        = "argocd"
+  create_namespace = true
+
+  set {
+    name  = "server.service.type"
+    value = "LoadBalancer"
+  }
+
+  dynamic "set" {
+    for_each = var.argocd_hostname == null ? [] : [var.argocd_hostname]
+    content {
+      name  = "server.service.annotations.external-dns\\.alpha\\.kubernetes\\.io/hostname"
+      value = set.value
+    }
+  }
+
+  depends_on = [helm_release.external_dns]
 }
 
 # Outputs will be defined in outputs.tf

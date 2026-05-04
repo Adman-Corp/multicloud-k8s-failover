@@ -46,6 +46,26 @@ output "oidc_issuer_url" {
   value       = azurerm_kubernetes_cluster.main.oidc_issuer_url
 }
 
+output "external_dns_namespace" {
+  description = "Namespace where external-dns is installed"
+  value       = helm_release.external_dns.namespace
+}
+
+output "external_dns_helm_chart_version" {
+  description = "External DNS Helm chart version"
+  value       = helm_release.external_dns.version
+}
+
+output "argocd_namespace" {
+  description = "Namespace where Argo CD is installed"
+  value       = helm_release.argocd.namespace
+}
+
+output "argocd_helm_chart_version" {
+  description = "Argo CD Helm chart version"
+  value       = helm_release.argocd.version
+}
+
 # SSH private key (sensitive) - only if needed for debugging
 output "ssh_private_key_pem" {
   description = "Generated SSH private key (PEM format)"

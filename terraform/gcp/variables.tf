@@ -31,6 +31,42 @@ variable "kubernetes_version" {
   default     = "1.35"
 }
 
+variable "external_dns_cloudflare_api_token" {
+  description = "Cloudflare API token used by external-dns"
+  type        = string
+  sensitive   = true
+}
+
+variable "external_dns_chart_version" {
+  description = "External DNS Helm chart version"
+  type        = string
+  default     = "1.21.1"
+}
+
+variable "external_dns_namespace" {
+  description = "Namespace where external-dns is installed"
+  type        = string
+  default     = "external-dns"
+}
+
+variable "external_dns_domain_filters" {
+  description = "DNS suffixes managed by external-dns"
+  type        = list(string)
+  default     = ["admancorp.com"]
+}
+
+variable "external_dns_cloudflare_zone_id" {
+  description = "Optional Cloudflare zone ID filter for external-dns"
+  type        = string
+  default     = null
+}
+
+variable "argocd_hostname" {
+  description = "DNS hostname managed by external-dns for the Argo CD server service"
+  type        = string
+  default     = null
+}
+
 # Node pool configuration
 variable "node_count" {
   description = "Number of worker nodes in the default node pool"
