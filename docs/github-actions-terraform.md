@@ -56,6 +56,7 @@ Pushes to `main` currently deploy only the `dev` environment by default.
 - The Azure workflow now authenticates through GitHub OIDC and an Azure federated identity credential instead of a stored client secret.
 - Azure OIDC must trust both the main branch subject (`repo:<owner>/<repo>:ref:refs/heads/main`) and the pull request subject (`repo:<owner>/<repo>:pull_request`) if PR plans should run against Azure.
 - The GCP workflow now authenticates through GitHub OIDC and Google Workload Identity Federation instead of a stored service account key.
+- The GCP bootstrap stack is intended to keep a shared GitHub OIDC pool and deployer service account in the bootstrap project while granting that shared identity access to separate `dev`, `uat`, and `prod` projects.
 - The workflow uses committed environment tfvars files instead of GitHub variables for infrastructure values.
 - Pull request comments summarize each environment with add/change/delete counts only and include a direct artifact link, while the `terraform-plan-<stack>` artifact keeps the full init/validate/plan logs.
 - The default workspace names created by the bootstrap stacks must stay aligned with the full workspace names selected in the GitHub Actions workflow.

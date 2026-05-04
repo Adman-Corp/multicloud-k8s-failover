@@ -1,11 +1,20 @@
-output "project_id" {
-  description = "Created GCP project ID"
-  value       = google_project.main.project_id
+output "environment_project_ids" {
+  description = "Created GCP project IDs by environment"
+  value = {
+    for env_name, project in google_project.environment : env_name => project.project_id
+  }
 }
 
-output "project_number" {
-  description = "Created GCP project number"
-  value       = google_project.main.number
+output "environment_project_numbers" {
+  description = "Created GCP project numbers by environment"
+  value = {
+    for env_name, project in google_project.environment : env_name => project.number
+  }
+}
+
+output "identity_project_id" {
+  description = "Bootstrap GCP project that hosts the GitHub OIDC pool and Terraform deployer service account"
+  value       = var.bootstrap_project_id
 }
 
 output "terraform_service_account_email" {

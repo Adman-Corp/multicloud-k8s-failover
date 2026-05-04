@@ -1,10 +1,41 @@
 locals {
   use_folder = var.folder_id != null && trim(var.folder_id) != ""
+
+  environment_projects = {
+    dev = {
+      project_id   = var.dev_project_id
+      display_name = "${var.project_name} Dev"
+    }
+    uat = {
+      project_id   = var.uat_project_id
+      display_name = "${var.project_name} UAT"
+    }
+    prod = {
+      project_id   = var.prod_project_id
+      display_name = "${var.project_name} Prod"
+    }
+  }
+
+  bootstrap_activate_apis = toset([
+    "cloudresourcemanager.googleapis.com",
+    "iam.googleapis.com",
+    "iamcredentials.googleapis.com",
+    "serviceusage.googleapis.com",
+  ])
+
+  deployer_roles = toset([
+    "roles/container.admin",
+    "roles/compute.networkAdmin",
+    "roles/iam.serviceAccountUser",
+    "roles/serviceusage.serviceUsageAdmin",
+  ])
 }
 
-resource "google_project" "main" {
-  project_id      = var.project_id
-  name            = var.project_name
+resource "google_project" "environment" {
+  for_each = local.environment_projects
+
+  project_id      = each.value.project_id
+  name            = each.value.display_name
   billing_account = var.billing_account
   org_id          = local.use_folder ? null : var.organization_id
   folder_id       = local.use_folder ? var.folder_id : null
@@ -17,57 +48,70 @@ resource "google_project" "main" {
   }
 }
 
-resource "google_project_service" "required" {
-  for_each = var.activate_apis
+resource "google_project_service" "bootstrap_required" {
+  for_each = local.bootstrap_activate_apis
 
-  project            = google_project.main.project_id
+  project            = var.bootstrap_project_id
   service            = each.value
   disable_on_destroy = false
 }
 
+resource "google_project_service" "required" {
+  for_each = {
+    for entry in flatten([
+      for env_name, config in local.environment_projects : [
+        for service in var.activate_apis : {
+          key        = "${env_name}:${service}"
+          env_name   = env_name
+          project_id = config.project_id
+          service    = service
+        }
+      ]
+    ]) : entry.key => entry
+  }
+
+  project            = each.value.project_id
+  service            = each.value.service
+  disable_on_destroy = false
+}
+
 resource "google_service_account" "terraform_deployer" {
-  project      = google_project.main.project_id
+  project      = var.bootstrap_project_id
   account_id   = var.service_account_id
   display_name = "GitHub Terraform Deployer"
 
-  depends_on = [google_project_service.required]
+  depends_on = [google_project_service.bootstrap_required]
 }
 
-resource "google_project_iam_member" "deployer_container_admin" {
-  project = google_project.main.project_id
-  role    = "roles/container.admin"
-  member  = "serviceAccount:${google_service_account.terraform_deployer.email}"
-}
+resource "google_project_iam_member" "deployer_project_roles" {
+  for_each = {
+    for entry in flatten([
+      for env_name, config in local.environment_projects : [
+        for role in local.deployer_roles : {
+          key        = "${env_name}:${role}"
+          project_id = config.project_id
+          role       = role
+        }
+      ]
+    ]) : entry.key => entry
+  }
 
-resource "google_project_iam_member" "deployer_compute_network_admin" {
-  project = google_project.main.project_id
-  role    = "roles/compute.networkAdmin"
-  member  = "serviceAccount:${google_service_account.terraform_deployer.email}"
-}
-
-resource "google_project_iam_member" "deployer_service_account_user" {
-  project = google_project.main.project_id
-  role    = "roles/iam.serviceAccountUser"
-  member  = "serviceAccount:${google_service_account.terraform_deployer.email}"
-}
-
-resource "google_project_iam_member" "deployer_service_usage_admin" {
-  project = google_project.main.project_id
-  role    = "roles/serviceusage.serviceUsageAdmin"
+  project = each.value.project_id
+  role    = each.value.role
   member  = "serviceAccount:${google_service_account.terraform_deployer.email}"
 }
 
 resource "google_iam_workload_identity_pool" "github" {
-  project                   = google_project.main.project_id
+  project                   = var.bootstrap_project_id
   workload_identity_pool_id = var.workload_identity_pool_id
   display_name              = "GitHub Actions Pool"
   description               = "Federates GitHub Actions OIDC identities into GCP"
 
-  depends_on = [google_project_service.required]
+  depends_on = [google_project_service.bootstrap_required]
 }
 
 resource "google_iam_workload_identity_pool_provider" "github" {
-  project                            = google_project.main.project_id
+  project                            = var.bootstrap_project_id
   workload_identity_pool_id          = google_iam_workload_identity_pool.github.workload_identity_pool_id
   workload_identity_pool_provider_id = var.workload_identity_provider_id
   display_name                       = "GitHub Repository Provider"
@@ -94,7 +138,7 @@ resource "google_service_account_iam_member" "github_workload_identity_user" {
 resource "tfe_workspace" "gcp_main" {
   name              = var.tfc_workspace_name
   organization      = var.tfc_organization
-  description       = "GKE deployment workspace for multicloud-k8s-failover"
+  description       = "GKE prod deployment workspace for multicloud-k8s-failover"
   working_directory = "terraform/gcp"
   execution_mode    = "local"
 }
