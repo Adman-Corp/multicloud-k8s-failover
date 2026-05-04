@@ -7,8 +7,8 @@ This repository includes a GitHub Actions workflow at `.github/workflows/terrafo
 
 ## Workflow Behavior
 
-- Pull requests: check the bootstrap stacks in `terraform/init_azure` and `terraform/init_gcp`, then run `terraform fmt -check`, `terraform init`, `terraform validate`, and `terraform plan` separately for `dev`, `uat`, and `prod`
-- Pushes to `main`: run bootstrap drift checks first, then run the same checks and `terraform apply` for `dev` only
+- Pull requests: run `terraform fmt -check`, `terraform init`, `terraform validate`, and `terraform plan` separately for `dev`, `uat`, and `prod`
+- Pushes to `main`: run the same checks and `terraform apply` for `dev` only
 - Manual runs: choose `dev`, `uat`, or `prod`, choose `azure`, `gcp`, or `all`, and choose `plan` or `apply`
 
 For pull requests, the workflow runs `init`, `validate`, and `plan` for `dev`, `uat`, and `prod`, posts add/change/delete counts as a PR comment with a link to the uploaded artifact, and uploads the full outputs as a workflow artifact.
@@ -50,7 +50,6 @@ Pushes to `main` currently deploy only the `dev` environment by default.
 ## Notes
 
 - The workflow relies on the Terraform Cloud backends already configured in `terraform/azure/provider.tf` and `terraform/gcp/provider.tf`.
-- The workflow also checks `terraform/init_azure` and `terraform/init_gcp`; non-PR runs fail if either bootstrap stack shows drift.
 - Each cloud stack uses environment-specific Terraform Cloud workspaces by setting `TF_WORKSPACE` to the full workspace name in the workflow.
 - The bootstrap stacks should create local-execution workspaces for `dev`, `uat`, and `prod` in both clouds so PR plans do not share state.
 - The bootstrap stacks create Terraform Cloud workspaces in local execution mode so Terraform Cloud stores state only.
