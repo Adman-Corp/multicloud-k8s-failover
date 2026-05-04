@@ -1,7 +1,7 @@
 location            = "eastus"
 resource_group_name = "mc-aks-rg-uat"
 cluster_name        = "mc-aks-uat"
-kubernetes_version  = "1.34"
+kubernetes_version  = "1.35"
 
 node_count   = 1
 node_vm_size = "Standard_DC2as_v5"

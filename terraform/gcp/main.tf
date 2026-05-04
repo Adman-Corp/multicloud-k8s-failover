@@ -33,9 +33,11 @@ resource "google_compute_subnetwork" "subnet" {
 resource "google_container_cluster" "primary" {
   provider = google-beta
 
-  name     = local.cluster_name
-  project  = var.project_id
-  location = var.zone
+  name                = local.cluster_name
+  project             = var.project_id
+  location            = var.zone
+  min_master_version  = var.kubernetes_version
+  deletion_protection = false
   # Zonal cluster (free-tier control plane)
   # Use regional for HA (additional cost)
   # location = var.region
@@ -108,6 +110,7 @@ resource "google_container_node_pool" "primary_nodes" {
   location   = var.zone
   cluster    = google_container_cluster.primary.name
   node_count = var.node_count
+  version    = var.kubernetes_version
 
   node_config {
     machine_type = var.node_machine_type

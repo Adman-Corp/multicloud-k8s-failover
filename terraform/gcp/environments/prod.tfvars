@@ -3,7 +3,7 @@ region     = "us-central1"
 zone       = "us-central1-a"
 
 cluster_name       = "mc-gke"
-kubernetes_version = "1.34"
+kubernetes_version = "1.35"
 
 node_count        = 1
 node_machine_type = "e2-small"
