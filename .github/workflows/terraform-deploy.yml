@@ -3,14 +3,18 @@ name: Terraform Deploy
 on:
   pull_request:
     paths:
-      - ".github/workflows/terraform-deploy.yml"
-      - "terraform/**"
+      - "terraform/**/*.tf"
+      - "terraform/**/*.tfvars"
+      - "terraform/**/*.tfvars.*"
+      - "terraform/**/.terraform.lock.hcl"
   push:
     branches:
       - main
     paths:
-      - ".github/workflows/terraform-deploy.yml"
-      - "terraform/**"
+      - "terraform/**/*.tf"
+      - "terraform/**/*.tfvars"
+      - "terraform/**/*.tfvars.*"
+      - "terraform/**/.terraform.lock.hcl"
   workflow_dispatch:
     inputs:
       environment:
@@ -50,7 +54,106 @@ env:
   TF_IN_AUTOMATION: true
 
 jobs:
+  bootstrap-drift-check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - stack: azure
+            working_directory: terraform/init_azure
+          - stack: gcp
+            working_directory: terraform/init_gcp
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ matrix.working_directory }}
+
+    env:
+      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      GCP_SERVICE_ACCOUNT_EMAIL: ${{ vars.GCP_SERVICE_ACCOUNT_EMAIL }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Authenticate to Azure
+        if: matrix.stack == 'azure'
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.ARM_CLIENT_ID }}
+          tenant-id: ${{ secrets.ARM_TENANT_ID }}
+          subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+
+      - name: Authenticate to Google Cloud
+        if: matrix.stack == 'gcp'
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Validate required credentials
+        run: |
+          if [[ "${{ matrix.stack }}" == "azure" ]]; then
+            for name in ARM_CLIENT_ID ARM_SUBSCRIPTION_ID ARM_TENANT_ID TF_TOKEN_app_terraform_io; do
+              if [[ -z "${!name}" ]]; then
+                echo "Missing required secret: $name" >&2
+                exit 1
+              fi
+            done
+          fi
+
+          if [[ "${{ matrix.stack }}" == "gcp" ]]; then
+            for name in GCP_WORKLOAD_IDENTITY_PROVIDER GCP_SERVICE_ACCOUNT_EMAIL TF_TOKEN_app_terraform_io; do
+              if [[ -z "${!name}" ]]; then
+                echo "Missing required secret: $name" >&2
+                exit 1
+              fi
+            done
+          fi
+
+      - name: Terraform fmt check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan check
+        if: github.event_name == 'pull_request'
+        run: terraform plan -no-color -input=false
+
+      - name: Terraform drift check
+        if: github.event_name != 'pull_request'
+        run: |
+          set +e
+          terraform plan -detailed-exitcode -no-color -input=false > plan.txt 2>&1
+          plan_exit=$?
+          set -e
+
+          cat plan.txt
+
+          if [[ "$plan_exit" -eq 1 ]]; then
+            exit 1
+          fi
+
+          if [[ "$plan_exit" -eq 2 ]]; then
+            echo "Bootstrap stack drift detected in ${{ matrix.working_directory }}. Apply the init stack before continuing." >&2
+            exit 1
+          fi
+
   terraform:
+    needs: bootstrap-drift-check
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
