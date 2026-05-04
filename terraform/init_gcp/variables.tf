@@ -3,13 +3,23 @@ variable "bootstrap_project_id" {
   type        = string
 }
 
-variable "project_id" {
-  description = "Project ID for the GKE deployment project"
+variable "dev_project_id" {
+  description = "Project ID for the GKE dev environment"
+  type        = string
+}
+
+variable "uat_project_id" {
+  description = "Project ID for the GKE uat environment"
+  type        = string
+}
+
+variable "prod_project_id" {
+  description = "Project ID for the GKE prod environment"
   type        = string
 }
 
 variable "project_name" {
-  description = "Display name for the GCP project"
+  description = "Display name prefix for the GCP environment projects"
   type        = string
   default     = "Multi-Cloud K8s Failover"
 }

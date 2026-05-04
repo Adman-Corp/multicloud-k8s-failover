@@ -1,5 +1,7 @@
 bootstrap_project_id          = "project-d55e225f-5ae9-4f18-801"
-project_id                    = "adman-k8s-failover-260502"
+dev_project_id                = "adman-k8s-failover-dev-260502"
+uat_project_id                = "adman-k8s-failover-uat-260502"
+prod_project_id               = "adman-k8s-failover-260502"
 project_name                  = "Multi-Cloud K8s Failover"
 organization_id               = "488403666624"
 folder_id                     = null
