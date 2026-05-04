@@ -24,7 +24,7 @@ terraform {
     organization = "AdmanCorp"
 
     workspaces {
-      name = "admancorp-azure-aks"
+      prefix = "admancorp-azure-aks-"
     }
   }
 }

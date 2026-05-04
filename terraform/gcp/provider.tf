@@ -20,7 +20,7 @@ terraform {
     organization = "AdmanCorp"
 
     workspaces {
-      name = "admancorp-gcp-gke"
+      prefix = "admancorp-gcp-gke-"
     }
   }
 }

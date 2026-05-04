@@ -138,6 +138,16 @@ git clone <repository-url>
 cd multicloud-k8s-failover
 ```
 
+### GitHub Actions Deployment
+
+This repo includes a GitHub Actions workflow for Terraform deployment in `.github/workflows/terraform-deploy.yml`.
+
+- Pull requests run `fmt`, `init`, `validate`, and `plan`
+- Pushes to `main` run the same checks and then `apply`
+- Manual runs support `azure`, `gcp`, or both
+
+Setup details are documented in `docs/github-actions-terraform.md`.
+
 ### 2. Set Up Azure AKS Cluster
 ```bash
 cd terraform/azure
@@ -189,6 +199,15 @@ gcloud auth application-default login
 ```
 
 ## Detailed Setup
+
+### Bootstrap Prerequisites
+
+If you want Terraform to create the cloud prerequisites needed by the main stacks and GitHub Actions pipeline, use:
+
+- `terraform/init_azure`: creates the Azure service principal, configures GitHub OIDC federation for that identity, assigns subscription access, and creates a Terraform Cloud workspace in local execution mode for the Azure stack
+- `terraform/init_gcp`: creates the GCP project, enables required APIs, creates a deployer service account, configures GitHub OIDC federation for that service account, and creates a Terraform Cloud workspace in local execution mode for the GCP stack
+
+These bootstrap stacks are intended to run before `terraform/azure` and `terraform/gcp`.
 
 ### Azure AKS Configuration
 

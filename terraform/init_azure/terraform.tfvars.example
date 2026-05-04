@@ -1,0 +1,9 @@
+subscription_id = "00000000-0000-0000-0000-000000000000"
+service_principal_name = "multicloud-k8s-failover-github-actions"
+role_definition_name = "Contributor"
+password_rotation_days = 365
+github_repository = "your-org/multicloud-k8s-failover"
+github_branch = "main"
+tfc_organization = "AdmanCorp"
+tfc_workspace_name = "admancorp-azure-aks"
+tfc_hostname = "app.terraform.io"

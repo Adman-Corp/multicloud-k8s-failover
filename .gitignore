@@ -10,6 +10,9 @@
 terraform.tfvars
 backend.tfvars
 
+!terraform/azure/environments/*.tfvars
+!terraform/gcp/environments/*.tfvars
+
 # SSH keys (if generated)
 *.pem
 *.pub
