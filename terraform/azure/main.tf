@@ -76,6 +76,11 @@ resource "azurerm_kubernetes_cluster" "main" {
     vnet_subnet_id = azurerm_subnet.aks.id
     type           = "VirtualMachineScaleSets"
     os_sku         = "Ubuntu"
+    upgrade_settings {
+      max_surge                     = "10%"
+      drain_timeout_in_minutes      = 0
+      node_soak_duration_in_minutes = 0
+    }
     # Enable auto-scaling if desired
     # enable_auto_scaling = true
     # min_count = 1
