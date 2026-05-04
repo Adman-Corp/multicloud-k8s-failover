@@ -21,11 +21,11 @@ resource "google_compute_subnetwork" "subnet" {
   ip_cidr_range = var.subnet_cidr
   secondary_ip_range {
     range_name    = "pods"
-    ip_cidr_range = "10.1.4.0/22"
+    ip_cidr_range = cidrsubnet(var.vpc_cidr, 6, 1)
   }
   secondary_ip_range {
     range_name    = "services"
-    ip_cidr_range = "10.1.6.0/24"
+    ip_cidr_range = cidrsubnet(var.vpc_cidr, 8, 2)
   }
 }
 
