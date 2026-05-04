@@ -131,13 +131,13 @@ jobs:
 
       - name: Terraform plan check
         if: github.event_name == 'pull_request'
-        run: terraform plan -no-color -input=false
+        run: terraform plan -no-color -input=false -var-file="terraform.tfvars"
 
       - name: Terraform drift check
         if: github.event_name != 'pull_request'
         run: |
           set +e
-          terraform plan -detailed-exitcode -no-color -input=false > plan.txt 2>&1
+          terraform plan -detailed-exitcode -no-color -input=false -var-file="terraform.tfvars" > plan.txt 2>&1
           plan_exit=$?
           set -e
 

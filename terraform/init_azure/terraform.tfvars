@@ -1,0 +1,9 @@
+subscription_id       = "49549aef-4e80-463a-a65b-795d24e4f88a"
+service_principal_name = "multicloud-k8s-failover-github-actions"
+role_definition_name  = "Contributor"
+password_rotation_days = 365
+github_repository     = "Adman-Corp/multicloud-k8s-failover"
+github_branch         = "main"
+tfc_organization      = "AdmanCorp"
+tfc_workspace_name    = "admancorp-azure-aks-prod"
+tfc_hostname          = "app.terraform.io"

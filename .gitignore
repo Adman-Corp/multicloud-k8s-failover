@@ -12,6 +12,8 @@ backend.tfvars
 
 !terraform/azure/environments/*.tfvars
 !terraform/gcp/environments/*.tfvars
+!terraform/init_azure/terraform.tfvars
+!terraform/init_gcp/terraform.tfvars
 
 # SSH keys (if generated)
 *.pem
