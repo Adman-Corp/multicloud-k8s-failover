@@ -50,6 +50,7 @@ The workflow selects one of those files with `-var-file`.
 - The bootstrap stacks should create local-execution workspaces for `dev`, `uat`, and `prod` in both clouds so PR plans do not share state.
 - The bootstrap stacks create Terraform Cloud workspaces in local execution mode so Terraform Cloud stores state only.
 - The Azure workflow now authenticates through GitHub OIDC and an Azure federated identity credential instead of a stored client secret.
+- Azure OIDC must trust both the main branch subject (`repo:<owner>/<repo>:ref:refs/heads/main`) and the pull request subject (`repo:<owner>/<repo>:pull_request`) if PR plans should run against Azure.
 - The GCP workflow now authenticates through GitHub OIDC and Google Workload Identity Federation instead of a stored service account key.
 - The workflow uses committed environment tfvars files instead of GitHub variables for infrastructure values.
 - Pull request comments summarize each environment with add/change/delete counts only, while the `terraform-plan-<stack>` artifact keeps the full init/validate/plan logs.

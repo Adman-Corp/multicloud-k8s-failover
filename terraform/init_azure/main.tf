@@ -27,6 +27,15 @@ resource "azuread_application_federated_identity_credential" "github_actions" {
   subject        = "repo:${var.github_repository}:ref:refs/heads/${var.github_branch}"
 }
 
+resource "azuread_application_federated_identity_credential" "github_actions_pull_request" {
+  application_id = azuread_application.github_actions.id
+  display_name   = "github-actions-oidc-pull-request"
+  description    = "Allows GitHub Actions pull request workflows to authenticate to Azure using OIDC"
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:${var.github_repository}:pull_request"
+}
+
 resource "azurerm_role_assignment" "github_actions_subscription" {
   scope                = "/subscriptions/${var.subscription_id}"
   role_definition_name = var.role_definition_name
