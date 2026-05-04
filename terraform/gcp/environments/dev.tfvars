@@ -2,9 +2,10 @@ project_id = "adman-k8s-failover-dev-260502"
 region     = "us-central1"
 zone       = "us-central1-a"
 
-cluster_name       = "mc-gke-dev"
-kubernetes_version = "1.35"
-argocd_hostname    = "argocd.gcp.admancorp.com"
+cluster_name            = "mc-gke-dev"
+kubernetes_version      = "1.35"
+argocd_hostname         = "argocd.gcp.admancorp.com"
+cert_manager_acme_email = "younesse.adman+gcp@gmail.com"
 
 node_count        = 1
 node_machine_type = "e2-small"

@@ -1,0 +1,6 @@
+certificate:
+  name: argocd-server-tls
+  secretName: argocd-server-tls
+  issuerRefName: letsencrypt-production
+  dnsNames:
+    - argocd.example.com

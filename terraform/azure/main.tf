@@ -113,6 +113,14 @@ resource "kubernetes_namespace" "external_dns" {
   depends_on = [azurerm_kubernetes_cluster.main]
 }
 
+resource "kubernetes_namespace" "cert_manager" {
+  metadata {
+    name = var.cert_manager_namespace
+  }
+
+  depends_on = [azurerm_kubernetes_cluster.main]
+}
+
 resource "kubernetes_secret" "external_dns_cloudflare_api_token" {
   metadata {
     name      = "cloudflare-api-token"
@@ -126,6 +134,21 @@ resource "kubernetes_secret" "external_dns_cloudflare_api_token" {
   type = "Opaque"
 
   depends_on = [kubernetes_namespace.external_dns]
+}
+
+resource "kubernetes_secret" "cert_manager_cloudflare_api_token" {
+  metadata {
+    name      = "cloudflare-api-token"
+    namespace = var.cert_manager_namespace
+  }
+
+  data = {
+    apiToken = var.external_dns_cloudflare_api_token
+  }
+
+  type = "Opaque"
+
+  depends_on = [kubernetes_namespace.cert_manager]
 }
 
 resource "helm_release" "external_dns" {
@@ -190,6 +213,83 @@ resource "helm_release" "external_dns" {
   depends_on = [kubernetes_secret.external_dns_cloudflare_api_token]
 }
 
+resource "helm_release" "cert_manager" {
+  name             = "cert-manager"
+  repository       = "https://charts.jetstack.io"
+  chart            = "cert-manager"
+  version          = var.cert_manager_chart_version
+  namespace        = var.cert_manager_namespace
+  create_namespace = false
+
+  set {
+    name  = "crds.enabled"
+    value = "true"
+  }
+
+  depends_on = [kubernetes_namespace.cert_manager]
+}
+
+resource "helm_release" "cert_manager_bootstrap" {
+  name             = "cert-manager-bootstrap"
+  chart            = "../charts/cert-manager-bootstrap"
+  namespace        = var.cert_manager_namespace
+  create_namespace = false
+
+  set {
+    name  = "issuer.name"
+    value = var.cert_manager_cluster_issuer_name
+  }
+
+  set {
+    name  = "issuer.email"
+    value = var.cert_manager_acme_email
+  }
+
+  set {
+    name  = "issuer.server"
+    value = var.cert_manager_acme_server
+  }
+
+  set {
+    name  = "issuer.privateKeySecretName"
+    value = "${var.cert_manager_cluster_issuer_name}-account-key"
+  }
+
+  depends_on = [helm_release.cert_manager, kubernetes_secret.cert_manager_cloudflare_api_token]
+}
+
+resource "helm_release" "argocd_bootstrap" {
+  name             = "argocd-bootstrap"
+  chart            = "../charts/argocd-bootstrap"
+  namespace        = "argocd"
+  create_namespace = true
+
+  set {
+    name  = "certificate.name"
+    value = var.argocd_certificate_name
+  }
+
+  set {
+    name  = "certificate.secretName"
+    value = "argocd-server-tls"
+  }
+
+  set {
+    name  = "certificate.issuerRefName"
+    value = var.cert_manager_cluster_issuer_name
+  }
+
+  dynamic "set" {
+    for_each = var.argocd_hostname == null ? [] : [var.argocd_hostname]
+    content {
+      name  = "certificate.dnsNames[0]"
+      value = set.value
+    }
+  }
+
+  depends_on = [helm_release.cert_manager_bootstrap]
+}
+
 resource "helm_release" "argocd" {
   name             = "argocd"
   repository       = "https://argoproj.github.io/argo-helm"
@@ -211,7 +311,7 @@ resource "helm_release" "argocd" {
     }
   }
 
-  depends_on = [helm_release.external_dns]
+  depends_on = [helm_release.external_dns, helm_release.cert_manager_bootstrap, helm_release.argocd_bootstrap]
 }
 
 # Role assignment for managed identity (if needed)
