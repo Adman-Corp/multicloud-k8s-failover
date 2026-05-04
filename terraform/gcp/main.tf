@@ -112,12 +112,12 @@ resource "google_container_cluster" "primary" {
 resource "google_container_node_pool" "primary_nodes" {
   provider = google-beta
 
-  name       = "${local.cluster_name}-node-pool"
-  project    = var.project_id
-  location   = var.zone
-  cluster    = google_container_cluster.primary.name
+  name               = "${local.cluster_name}-node-pool"
+  project            = var.project_id
+  location           = var.zone
+  cluster            = google_container_cluster.primary.name
   initial_node_count = var.node_count
-  version    = data.google_container_engine_versions.gke.latest_node_version
+  version            = data.google_container_engine_versions.gke.latest_node_version
 
   node_config {
     machine_type = var.node_machine_type
