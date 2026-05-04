@@ -78,6 +78,7 @@ jobs:
     steps:
       - name: Filter matrix by manual target
         id: filter
+        working-directory: .
         run: |
           if [[ "${{ github.event_name }}" != "workflow_dispatch" ]]; then
             echo "selected=true" >> "$GITHUB_OUTPUT"
