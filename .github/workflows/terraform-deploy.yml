@@ -170,12 +170,12 @@ jobs:
             printf '## %s\n\n' "$env_name" >> pr-plan-summary.md
             if ! TF_WORKSPACE="$env_name" terraform init -reconfigure -input=false -no-color > "$artifact_dir/init.txt" 2>&1; then
               overall_status=1
-              printf '- init failed\n\n' >> pr-plan-summary.md
+              printf -- '- init failed\n\n' >> pr-plan-summary.md
               continue
             fi
             if ! TF_WORKSPACE="$env_name" terraform validate -no-color > "$artifact_dir/validate.txt" 2>&1; then
               overall_status=1
-              printf '- validate failed\n\n' >> pr-plan-summary.md
+              printf -- '- validate failed\n\n' >> pr-plan-summary.md
               continue
             fi
 
@@ -186,7 +186,7 @@ jobs:
 
             if [[ "$plan_exit" -eq 1 ]]; then
               overall_status=1
-              printf '- plan failed\n\n' >> pr-plan-summary.md
+              printf -- '- plan failed\n\n' >> pr-plan-summary.md
               continue
             fi
 
@@ -195,9 +195,9 @@ jobs:
             change_count=$(jq '[.resource_changes[]? | select(.change.actions | index("update"))] | length' "$artifact_dir/plan.json")
             delete_count=$(jq '[.resource_changes[]? | select(.change.actions | index("delete"))] | length' "$artifact_dir/plan.json")
 
-            printf '- add: %s\n' "$add_count" >> pr-plan-summary.md
-            printf '- change: %s\n' "$change_count" >> pr-plan-summary.md
-            printf '- delete: %s\n\n' "$delete_count" >> pr-plan-summary.md
+            printf -- '- add: %s\n' "$add_count" >> pr-plan-summary.md
+            printf -- '- change: %s\n' "$change_count" >> pr-plan-summary.md
+            printf -- '- delete: %s\n\n' "$delete_count" >> pr-plan-summary.md
           done
           exit "$overall_status"
 
