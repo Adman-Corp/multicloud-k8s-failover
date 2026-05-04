@@ -4,6 +4,7 @@ zone       = "us-central1-a"
 
 cluster_name       = "mc-gke-dev"
 kubernetes_version = "1.35"
+argocd_hostname    = "argocd.gcp.admancorp.com"
 
 node_count        = 1
 node_machine_type = "e2-small"

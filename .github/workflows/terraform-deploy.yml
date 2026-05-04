@@ -76,6 +76,7 @@ jobs:
       ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
       ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      TF_VAR_external_dns_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       GCP_SERVICE_ACCOUNT_EMAIL: ${{ vars.GCP_SERVICE_ACCOUNT_EMAIL }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       TFE_TOKEN: ${{ secrets.TF_API_TOKEN }}
@@ -125,7 +126,7 @@ jobs:
         if: steps.filter.outputs.selected == 'true'
         run: |
           if [[ "${{ matrix.stack }}" == "azure" ]]; then
-            for name in ARM_CLIENT_ID ARM_SUBSCRIPTION_ID ARM_TENANT_ID TF_TOKEN_app_terraform_io; do
+            for name in ARM_CLIENT_ID ARM_SUBSCRIPTION_ID ARM_TENANT_ID TF_TOKEN_app_terraform_io TF_VAR_external_dns_cloudflare_api_token; do
               if [[ -z "${!name}" ]]; then
                 echo "Missing required secret: $name" >&2
                 exit 1
@@ -134,7 +135,7 @@ jobs:
           fi
 
           if [[ "${{ matrix.stack }}" == "gcp" ]]; then
-            for name in GCP_WORKLOAD_IDENTITY_PROVIDER GCP_SERVICE_ACCOUNT_EMAIL TF_TOKEN_app_terraform_io; do
+            for name in GCP_WORKLOAD_IDENTITY_PROVIDER GCP_SERVICE_ACCOUNT_EMAIL TF_TOKEN_app_terraform_io TF_VAR_external_dns_cloudflare_api_token; do
               if [[ -z "${!name}" ]]; then
                 echo "Missing required secret: $name" >&2
                 exit 1
