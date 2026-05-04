@@ -309,6 +309,7 @@ resource "helm_release" "cert_manager_bootstrap" {
 }
 
 resource "helm_release" "argocd_bootstrap" {
+  count            = var.argocd_hostname == null ? 0 : 1
   name             = "argocd-bootstrap"
   chart            = "../charts/argocd-bootstrap"
   namespace        = "argocd"
