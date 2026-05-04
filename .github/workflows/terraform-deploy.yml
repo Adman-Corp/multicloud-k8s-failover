@@ -208,6 +208,7 @@ jobs:
           exit "$overall_status"
 
       - name: Upload PR plan artifacts
+        id: upload-pr-artifacts
         if: always() && steps.filter.outputs.selected == 'true' && github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
@@ -231,6 +232,7 @@ jobs:
             const fs = require('fs');
             const marker = `<!-- terraform-plan:${{ matrix.stack }} -->`;
             const planPath = `${process.env.GITHUB_WORKSPACE}/${{ matrix.working_directory }}/pr-plan-summary.md`;
+            const artifactUrl = 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ steps.upload-pr-artifacts.outputs.artifact-id }}';
             const planOutput = fs.existsSync(planPath)
               ? fs.readFileSync(planPath, 'utf8')
               : 'Plan summary was not generated. Check the workflow logs and artifacts for details.';
@@ -240,7 +242,7 @@ jobs:
               '',
               `Job status: \`${{ job.status }}\``,
               '',
-              `Full init/validate/plan outputs are uploaded as artifact \`terraform-plan-${{ matrix.stack }}\`.`,
+              `[View artifact \`terraform-plan-${{ matrix.stack }}\`](${artifactUrl})`,
               '',
               `Working directory: \`${{ matrix.working_directory }}\``,
               '',

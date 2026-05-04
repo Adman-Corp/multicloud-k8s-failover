@@ -11,7 +11,7 @@ This repository includes a GitHub Actions workflow at `.github/workflows/terrafo
 - Pushes to `main`: run the same checks and then `terraform apply`
 - Manual runs: choose `dev`, `uat`, or `prod`, choose `azure`, `gcp`, or `all`, and choose `plan` or `apply`
 
-For pull requests, the workflow runs `init`, `validate`, and `plan` for `dev`, `uat`, and `prod`, posts add/change/delete counts as a PR comment, and uploads the full outputs as a workflow artifact.
+For pull requests, the workflow runs `init`, `validate`, and `plan` for `dev`, `uat`, and `prod`, posts add/change/delete counts as a PR comment with a link to the uploaded artifact, and uploads the full outputs as a workflow artifact.
 
 ## Required GitHub Secrets
 
@@ -53,6 +53,6 @@ The workflow selects one of those files with `-var-file`.
 - Azure OIDC must trust both the main branch subject (`repo:<owner>/<repo>:ref:refs/heads/main`) and the pull request subject (`repo:<owner>/<repo>:pull_request`) if PR plans should run against Azure.
 - The GCP workflow now authenticates through GitHub OIDC and Google Workload Identity Federation instead of a stored service account key.
 - The workflow uses committed environment tfvars files instead of GitHub variables for infrastructure values.
-- Pull request comments summarize each environment with add/change/delete counts only, while the `terraform-plan-<stack>` artifact keeps the full init/validate/plan logs.
+- Pull request comments summarize each environment with add/change/delete counts only and include a direct artifact link, while the `terraform-plan-<stack>` artifact keeps the full init/validate/plan logs.
 - The default workspace names created by the bootstrap stacks must stay aligned with the full workspace names selected in the GitHub Actions workflow.
 - If you want approval gates before apply, attach the workflow to a protected GitHub environment and require reviewers there.
