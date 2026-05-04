@@ -7,7 +7,7 @@ This repository includes a GitHub Actions workflow at `.github/workflows/terrafo
 
 ## Workflow Behavior
 
-- Pull requests: run `terraform fmt -check`, then run `terraform init -reconfigure`, `terraform validate`, and `terraform plan` separately for `dev`, `uat`, and `prod`
+- Pull requests: run `terraform fmt -check`, then run `terraform init`, `terraform validate`, and `terraform plan` separately for `dev`, `uat`, and `prod`
 - Pushes to `main`: run the same checks and then `terraform apply`
 - Manual runs: choose `dev`, `uat`, or `prod`, choose `azure`, `gcp`, or `all`, and choose `plan` or `apply`
 

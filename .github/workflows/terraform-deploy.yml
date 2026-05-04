@@ -168,7 +168,7 @@ jobs:
             artifact_dir="pr-artifacts/${env_name}"
             mkdir -p "$artifact_dir"
             printf '## %s\n\n' "$env_name" >> pr-plan-summary.md
-            if ! TF_WORKSPACE="$env_name" terraform init -reconfigure -input=false -no-color > "$artifact_dir/init.txt" 2>&1; then
+            if ! TF_WORKSPACE="$env_name" terraform init -input=false -no-color > "$artifact_dir/init.txt" 2>&1; then
               overall_status=1
               printf -- '- init failed\n\n' >> pr-plan-summary.md
               continue
@@ -199,6 +199,9 @@ jobs:
             printf -- '- change: %s\n' "$change_count" >> pr-plan-summary.md
             printf -- '- delete: %s\n\n' "$delete_count" >> pr-plan-summary.md
           done
+
+          printf 'Terraform PR plan summary:\n\n'
+          cat pr-plan-summary.md
           exit "$overall_status"
 
       - name: Upload PR plan artifacts
