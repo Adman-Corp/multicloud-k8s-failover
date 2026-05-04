@@ -18,10 +18,6 @@ terraform {
 
   cloud {
     organization = "AdmanCorp"
-
-    workspaces {
-      prefix = "admancorp-gcp-gke-"
-    }
   }
 }
 

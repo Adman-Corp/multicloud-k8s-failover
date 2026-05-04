@@ -22,10 +22,6 @@ terraform {
 
   cloud {
     organization = "AdmanCorp"
-
-    workspaces {
-      prefix = "admancorp-azure-aks-"
-    }
   }
 }
 

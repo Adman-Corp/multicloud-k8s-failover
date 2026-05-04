@@ -46,7 +46,7 @@ The workflow selects one of those files with `-var-file`.
 ## Notes
 
 - The workflow relies on the Terraform Cloud backends already configured in `terraform/azure/provider.tf` and `terraform/gcp/provider.tf`.
-- Each cloud stack uses environment-specific Terraform Cloud workspaces through a workspace prefix and `TF_WORKSPACE` selection in the workflow.
+- Each cloud stack uses environment-specific Terraform Cloud workspaces by setting `TF_WORKSPACE` to the full workspace name in the workflow.
 - The bootstrap stacks should create local-execution workspaces for `dev`, `uat`, and `prod` in both clouds so PR plans do not share state.
 - The bootstrap stacks create Terraform Cloud workspaces in local execution mode so Terraform Cloud stores state only.
 - The Azure workflow now authenticates through GitHub OIDC and an Azure federated identity credential instead of a stored client secret.
@@ -54,5 +54,5 @@ The workflow selects one of those files with `-var-file`.
 - The GCP workflow now authenticates through GitHub OIDC and Google Workload Identity Federation instead of a stored service account key.
 - The workflow uses committed environment tfvars files instead of GitHub variables for infrastructure values.
 - Pull request comments summarize each environment with add/change/delete counts only, while the `terraform-plan-<stack>` artifact keeps the full init/validate/plan logs.
-- The default workspace names created by the bootstrap stacks must stay aligned with the `cloud.workspaces.name` values in the main stack `provider.tf` files.
+- The default workspace names created by the bootstrap stacks must stay aligned with the full workspace names selected in the GitHub Actions workflow.
 - If you want approval gates before apply, attach the workflow to a protected GitHub environment and require reviewers there.
