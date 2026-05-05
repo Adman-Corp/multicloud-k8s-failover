@@ -7,7 +7,7 @@ kubernetes_version      = "1.35"
 cert_manager_acme_email = "younesse.adman+gcp@gmail.com"
 
 node_count        = 1
-node_machine_type = "e2-small"
+node_machine_type = "e2-medium"
 node_disk_size_gb = 30
 
 vpc_name    = "mc-gke-vpc"
