@@ -340,21 +340,6 @@ resource "helm_release" "envoy_gateway" {
   depends_on = [kubernetes_namespace.envoy_gateway]
 }
 
-resource "kubernetes_manifest" "envoy_gateway_class" {
-  manifest = {
-    apiVersion = "gateway.networking.k8s.io/v1"
-    kind       = "GatewayClass"
-    metadata = {
-      name = var.envoy_gateway_class_name
-    }
-    spec = {
-      controllerName = "gateway.envoyproxy.io/gatewayclass-controller"
-    }
-  }
-
-  depends_on = [helm_release.envoy_gateway]
-}
-
 resource "helm_release" "argocd" {
   name             = "argocd"
   repository       = "https://argoproj.github.io/argo-helm"

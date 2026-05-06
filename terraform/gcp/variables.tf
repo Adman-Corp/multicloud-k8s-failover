@@ -79,12 +79,6 @@ variable "envoy_gateway_namespace" {
   default     = "envoy-gateway-system"
 }
 
-variable "envoy_gateway_class_name" {
-  description = "GatewayClass name used by the shared public Gateway"
-  type        = string
-  default     = "admancorp-envoy"
-}
-
 variable "platform_ingress_namespace" {
   description = "Namespace for shared Gateway and listener resources"
   type        = string
