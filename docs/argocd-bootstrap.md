@@ -8,12 +8,12 @@ This repository now includes a minimal Argo CD bootstrap for both dev clusters:
 - GCP GKE dev
 
 Terraform installs the cluster bootstrap components before GitOps takes over.
-For the dev clusters this now includes `external-dns` and `cert-manager`
-before Argo CD in the `argocd` namespace. `cert-manager` is bootstrapped with a
-Cloudflare-backed DNS-01 `ClusterIssuer` for Let's Encrypt, and Terraform also
-creates an `argocd-server-tls` `Certificate` in the `argocd` namespace. The
-Argo CD server service is exposed as a `LoadBalancer`, and the service can be
-published through Cloudflare by `external-dns`.
+For the dev clusters this now includes `external-dns`, `cert-manager`, and
+`Envoy Gateway` before Argo CD in the `argocd` namespace. `cert-manager` is
+bootstrapped with a Cloudflare-backed DNS-01 `ClusterIssuer` for Let's
+Encrypt. Argo CD is exposed through the shared Envoy `Gateway` rather than its
+own public `LoadBalancer` service. In this repository, that shared Gateway is
+currently used for platform access such as Argo CD, not application routing.
 
 ## Repository Layout
 
@@ -42,10 +42,10 @@ After Terraform has applied successfully, apply the root application:
 kubectl apply -f gitops/clusters/azure-dev/root-application.yaml
 ```
 
-Azure dev also bootstraps `external-dns` and `cert-manager` before Argo CD.
-When the Cloudflare token and hostname inputs are set, Terraform creates the
-Let's Encrypt DNS-01 `ClusterIssuer` and annotates the Argo CD server service
-so `external-dns` can publish `argocd.az.admancorp.com`.
+Azure dev also bootstraps `external-dns`, `cert-manager`, and `Envoy Gateway`
+before Argo CD. The shared Envoy public service is annotated so
+`external-dns` can publish both `azure-gw.admancorp.com` and
+`argocd.az.admancorp.com`.
 
 ## GCP Dev
 
@@ -55,10 +55,10 @@ After Terraform has applied successfully, apply the root application:
 kubectl apply -f gitops/clusters/gcp-dev/root-application.yaml
 ```
 
-GCP dev also bootstraps `external-dns` and `cert-manager` before Argo CD. When
-the Cloudflare token and hostname inputs are set, Terraform creates the Let's
-Encrypt DNS-01 `ClusterIssuer` and annotates the Argo CD server service so
-`external-dns` can publish `argocd.gcp.admancorp.com`.
+GCP dev also bootstraps `external-dns`, `cert-manager`, and `Envoy Gateway`
+before Argo CD. The shared Envoy public service is annotated so
+`external-dns` can publish both `gcp-gw.admancorp.com` and
+`argocd.gcp.admancorp.com`.
 
 ## Initial Admin Password
 
@@ -70,10 +70,8 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.pas
 
 ## Current Scope
 
-The current root applications only establish the shared `platform` project.
-They do not yet create the operator applications under:
+The current root applications establish the shared `platform` project and the
+initial Envoy-based ingress resources under:
 
 - `gitops/platform/azure/dev`
 - `gitops/platform/gcp/dev`
-
-That is where the remaining platform operators should be layered in next.

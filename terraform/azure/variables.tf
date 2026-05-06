@@ -57,7 +57,31 @@ variable "external_dns_cloudflare_zone_id" {
 }
 
 variable "argocd_hostname" {
-  description = "DNS hostname managed by external-dns for the Argo CD server service"
+  description = "Cluster-specific public hostname routed to Argo CD through Envoy Gateway"
+  type        = string
+  default     = null
+}
+
+variable "envoy_gateway_chart_version" {
+  description = "Envoy Gateway Helm chart version"
+  type        = string
+  default     = "v1.7.2"
+}
+
+variable "envoy_gateway_namespace" {
+  description = "Namespace where Envoy Gateway is installed"
+  type        = string
+  default     = "envoy-gateway-system"
+}
+
+variable "platform_ingress_namespace" {
+  description = "Namespace for shared Gateway and listener resources"
+  type        = string
+  default     = "platform-ingress"
+}
+
+variable "envoy_gateway_dns_hostname" {
+  description = "Cluster-specific DNS hostname for the Envoy public load balancer"
   type        = string
   default     = null
 }
