@@ -11,9 +11,13 @@ Terraform installs the cluster bootstrap components before GitOps takes over.
 For the dev clusters this now includes `external-dns`, `cert-manager`, and
 `Envoy Gateway` before Argo CD in the `argocd` namespace. `cert-manager` is
 bootstrapped with a Cloudflare-backed DNS-01 `ClusterIssuer` for Let's
-Encrypt. Argo CD is exposed through the shared Envoy `Gateway` rather than its
-own public `LoadBalancer` service. In this repository, that shared Gateway is
-currently used for platform access such as Argo CD, not application routing.
+Encrypt. Terraform also bootstraps the minimum Gateway API resources needed to
+make Argo CD reachable through Envoy: `GatewayClass`, one shared platform
+`Gateway`, one Argo CD `HTTPRoute`, and one Argo CD listener `Certificate`.
+
+The shared `GatewayClass` is platform bootstrap, not Argo CD-specific routing.
+It is installed separately from the Argo CD-specific Gateway and route
+resources.
 
 ## Repository Layout
 
@@ -42,10 +46,8 @@ After Terraform has applied successfully, apply the root application:
 kubectl apply -f gitops/clusters/azure-dev/root-application.yaml
 ```
 
-Azure dev also bootstraps `external-dns`, `cert-manager`, and `Envoy Gateway`
-before Argo CD. The shared Envoy public service is annotated so
-`external-dns` can publish both `azure-gw.admancorp.com` and
-`argocd.az.admancorp.com`.
+Azure dev also bootstraps `external-dns`, `cert-manager`, `Envoy Gateway`, and
+the Argo CD Gateway API bootstrap resources before GitOps takes over.
 
 ## GCP Dev
 
@@ -55,10 +57,8 @@ After Terraform has applied successfully, apply the root application:
 kubectl apply -f gitops/clusters/gcp-dev/root-application.yaml
 ```
 
-GCP dev also bootstraps `external-dns`, `cert-manager`, and `Envoy Gateway`
-before Argo CD. The shared Envoy public service is annotated so
-`external-dns` can publish both `gcp-gw.admancorp.com` and
-`argocd.gcp.admancorp.com`.
+GCP dev also bootstraps `external-dns`, `cert-manager`, `Envoy Gateway`, and
+the Argo CD Gateway API bootstrap resources before GitOps takes over.
 
 ## Initial Admin Password
 
@@ -70,8 +70,7 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.pas
 
 ## Current Scope
 
-The current root applications establish the shared `platform` project and the
-initial Envoy-based ingress resources under:
+The current root applications establish the shared `platform` project under:
 
 - `gitops/platform/azure/dev`
 - `gitops/platform/gcp/dev`

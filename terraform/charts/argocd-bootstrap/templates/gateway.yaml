@@ -1,18 +1,16 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: public-gateway
-  namespace: platform-ingress
-  annotations:
-    admancorp.com/scope: platform-only
+  name: {{ .Values.gateway.name }}
+  namespace: {{ .Values.gateway.namespace }}
 spec:
-  gatewayClassName: admancorp-envoy
+  gatewayClassName: {{ .Values.gateway.className }}
   infrastructure:
     parametersRef:
       group: gateway.envoyproxy.io
       kind: EnvoyProxy
-      name: public-gateway-proxy
-      namespace: platform-ingress
+      name: {{ .Values.envoyProxy.name }}
+      namespace: {{ .Values.gateway.namespace }}
   listeners:
     - name: http
       protocol: HTTP
@@ -21,13 +19,13 @@ spec:
         namespaces:
           from: All
     - name: https-argocd
-      hostname: argocd-placeholder.admancorp.com
+      hostname: {{ .Values.argocd.hostname }}
       protocol: HTTPS
       port: 443
       tls:
         certificateRefs:
           - kind: Secret
-            name: argocd-gateway-tls
+            name: {{ .Values.certificate.secretName }}
       allowedRoutes:
         namespaces:
           from: All

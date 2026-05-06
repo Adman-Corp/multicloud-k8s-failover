@@ -1,3 +1,0 @@
-- op: replace
-  path: /spec/dnsNames/0
-  value: argocd.gcp.admancorp.com
