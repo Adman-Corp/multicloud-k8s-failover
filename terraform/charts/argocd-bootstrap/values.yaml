@@ -1,6 +1,20 @@
 certificate:
-  name: argocd-server-tls
-  secretName: argocd-server-tls
+  name: argocd-gateway-tls
+  secretName: argocd-gateway-tls
   issuerRefName: letsencrypt-production
-  dnsNames:
-    - argocd.example.com
+  dnsName: argocd.example.com
+
+gateway:
+  name: public-gateway
+  namespace: platform-ingress
+  className: admancorp-envoy
+
+envoyProxy:
+  name: public-gateway-proxy
+  dnsHostname: argocd.example.com
+
+argocd:
+  namespace: argocd
+  serviceName: argocd-server
+  servicePort: 80
+  hostname: argocd.example.com

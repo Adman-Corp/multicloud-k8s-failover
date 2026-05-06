@@ -1,3 +1,0 @@
-- op: replace
-  path: /spec/listeners/2/hostname
-  value: argocd.gcp.admancorp.com

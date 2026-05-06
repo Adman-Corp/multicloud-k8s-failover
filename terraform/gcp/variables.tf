@@ -92,9 +92,9 @@ variable "envoy_gateway_dns_hostname" {
 }
 
 variable "argocd_certificate_name" {
-  description = "cert-manager Certificate name for Argo CD server TLS"
+  description = "cert-manager Certificate name for the Argo CD Gateway listener TLS"
   type        = string
-  default     = "argocd-server-tls"
+  default     = "argocd-gateway-tls"
 }
 
 variable "cert_manager_chart_version" {

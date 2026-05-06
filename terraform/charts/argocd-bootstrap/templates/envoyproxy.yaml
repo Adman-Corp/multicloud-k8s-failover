@@ -1,8 +1,8 @@
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyProxy
 metadata:
-  name: public-gateway-proxy
-  namespace: platform-ingress
+  name: {{ .Values.envoyProxy.name }}
+  namespace: {{ .Values.gateway.namespace }}
 spec:
   provider:
     type: Kubernetes
@@ -10,7 +10,7 @@ spec:
       envoyService:
         type: LoadBalancer
         annotations:
-          external-dns.alpha.kubernetes.io/hostname: envoy-gw-placeholder.admancorp.com
+          external-dns.alpha.kubernetes.io/hostname: {{ .Values.envoyProxy.dnsHostname }}
       envoyDeployment:
         replicas: 2
       envoyPDB:

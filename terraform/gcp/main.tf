@@ -340,6 +340,15 @@ resource "helm_release" "envoy_gateway" {
   depends_on = [kubernetes_namespace.envoy_gateway]
 }
 
+resource "helm_release" "platform_bootstrap" {
+  name             = "platform-bootstrap"
+  chart            = "../charts/platform-bootstrap"
+  namespace        = var.platform_ingress_namespace
+  create_namespace = false
+
+  depends_on = [helm_release.envoy_gateway, kubernetes_namespace.platform_ingress]
+}
+
 resource "helm_release" "argocd" {
   name             = "argocd"
   repository       = "https://argoproj.github.io/argo-helm"
@@ -364,6 +373,56 @@ resource "helm_release" "argocd" {
   }
 
   depends_on = [helm_release.external_dns, helm_release.cert_manager_bootstrap, helm_release.envoy_gateway]
+}
+
+resource "helm_release" "argocd_bootstrap" {
+  count            = var.argocd_hostname == null ? 0 : 1
+  name             = "argocd-bootstrap"
+  chart            = "../charts/argocd-bootstrap"
+  namespace        = var.platform_ingress_namespace
+  create_namespace = false
+
+  set {
+    name  = "certificate.name"
+    value = var.argocd_certificate_name
+  }
+
+  set {
+    name  = "certificate.secretName"
+    value = var.argocd_certificate_name
+  }
+
+  set {
+    name  = "certificate.issuerRefName"
+    value = var.cert_manager_cluster_issuer_name
+  }
+
+  set {
+    name  = "certificate.dnsName"
+    value = var.argocd_hostname
+  }
+
+  set {
+    name  = "gateway.namespace"
+    value = var.platform_ingress_namespace
+  }
+
+  set {
+    name  = "envoyProxy.dnsHostname"
+    value = var.argocd_hostname
+  }
+
+  set {
+    name  = "argocd.namespace"
+    value = "argocd"
+  }
+
+  set {
+    name  = "argocd.hostname"
+    value = var.argocd_hostname
+  }
+
+  depends_on = [helm_release.platform_bootstrap, helm_release.argocd, helm_release.cert_manager_bootstrap, helm_release.external_dns, kubernetes_namespace.platform_ingress]
 }
 
 # Outputs will be defined in outputs.tf
