@@ -1,7 +1,28 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: argocd
-
 resources:
   - ../../base/project-platform.yaml
+  - ../../base/envoy-gateway
+
+patches:
+  - path: envoy-proxy-patch.yaml
+    target:
+      kind: EnvoyProxy
+      name: public-gateway-proxy
+      namespace: platform-ingress
+  - path: gateway-patch.yaml
+    target:
+      kind: Gateway
+      name: public-gateway
+      namespace: platform-ingress
+  - path: certificate-patch.yaml
+    target:
+      kind: Certificate
+      name: argocd-gateway-tls
+      namespace: platform-ingress
+  - path: argocd-httproute-patch.yaml
+    target:
+      kind: HTTPRoute
+      name: argocd
+      namespace: argocd

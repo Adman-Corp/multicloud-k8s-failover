@@ -171,6 +171,22 @@ resource "kubernetes_namespace" "cert_manager" {
   depends_on = [google_container_node_pool.primary_nodes]
 }
 
+resource "kubernetes_namespace" "envoy_gateway" {
+  metadata {
+    name = var.envoy_gateway_namespace
+  }
+
+  depends_on = [google_container_node_pool.primary_nodes]
+}
+
+resource "kubernetes_namespace" "platform_ingress" {
+  metadata {
+    name = var.platform_ingress_namespace
+  }
+
+  depends_on = [google_container_node_pool.primary_nodes]
+}
+
 resource "kubernetes_secret" "external_dns_cloudflare_api_token" {
   metadata {
     name      = "cloudflare-api-token"
@@ -308,37 +324,35 @@ resource "helm_release" "cert_manager_bootstrap" {
   depends_on = [helm_release.cert_manager, kubernetes_secret.cert_manager_cloudflare_api_token]
 }
 
-resource "helm_release" "argocd_bootstrap" {
-  count            = var.argocd_hostname == null ? 0 : 1
-  name             = "argocd-bootstrap"
-  chart            = "../charts/argocd-bootstrap"
-  namespace        = "argocd"
-  create_namespace = true
+resource "helm_release" "envoy_gateway" {
+  name             = "envoy-gateway"
+  repository       = "oci://docker.io/envoyproxy"
+  chart            = "gateway-helm"
+  version          = var.envoy_gateway_chart_version
+  namespace        = var.envoy_gateway_namespace
+  create_namespace = false
 
   set {
-    name  = "certificate.name"
-    value = var.argocd_certificate_name
+    name  = "deployment.replicas"
+    value = "2"
   }
 
-  set {
-    name  = "certificate.secretName"
-    value = "argocd-server-tls"
-  }
+  depends_on = [kubernetes_namespace.envoy_gateway]
+}
 
-  set {
-    name  = "certificate.issuerRefName"
-    value = var.cert_manager_cluster_issuer_name
-  }
-
-  dynamic "set" {
-    for_each = var.argocd_hostname == null ? [] : [var.argocd_hostname]
-    content {
-      name  = "certificate.dnsNames[0]"
-      value = set.value
+resource "kubernetes_manifest" "envoy_gateway_class" {
+  manifest = {
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "GatewayClass"
+    metadata = {
+      name = var.envoy_gateway_class_name
+    }
+    spec = {
+      controllerName = "gateway.envoyproxy.io/gatewayclass-controller"
     }
   }
 
-  depends_on = [helm_release.cert_manager_bootstrap]
+  depends_on = [helm_release.envoy_gateway]
 }
 
 resource "helm_release" "argocd" {
@@ -351,18 +365,20 @@ resource "helm_release" "argocd" {
 
   set {
     name  = "server.service.type"
-    value = "LoadBalancer"
+    value = "ClusterIP"
   }
 
-  dynamic "set" {
-    for_each = var.argocd_hostname == null ? [] : [var.argocd_hostname]
-    content {
-      name  = "server.service.annotations.external-dns\\.alpha\\.kubernetes\\.io/hostname"
-      value = set.value
-    }
+  set {
+    name  = "server.ingress.enabled"
+    value = "false"
   }
 
-  depends_on = [helm_release.external_dns, helm_release.cert_manager_bootstrap, helm_release.argocd_bootstrap]
+  set {
+    name  = "server.extraArgs[0]"
+    value = "--insecure"
+  }
+
+  depends_on = [helm_release.external_dns, helm_release.cert_manager_bootstrap, helm_release.envoy_gateway]
 }
 
 # Outputs will be defined in outputs.tf

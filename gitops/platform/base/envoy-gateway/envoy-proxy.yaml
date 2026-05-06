@@ -1,0 +1,17 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: public-gateway-proxy
+  namespace: platform-ingress
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        type: LoadBalancer
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: envoy-gw-placeholder.admancorp.com
+      envoyDeployment:
+        replicas: 2
+      envoyPDB:
+        minAvailable: 1

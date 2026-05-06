@@ -1,0 +1,3 @@
+- op: replace
+  path: /spec/provider/kubernetes/envoyService/annotations/external-dns.alpha.kubernetes.io~1hostname
+  value: gcp-gw.admancorp.com,argocd.gcp.admancorp.com
