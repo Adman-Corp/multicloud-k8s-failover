@@ -245,6 +245,21 @@ resource "helm_release" "external_dns" {
     value = google_container_cluster.primary.name
   }
 
+  set {
+    name  = "sources[0]"
+    value = "gateway-httproute"
+  }
+
+  set {
+    name  = "extraArgs.gateway-name"
+    value = "platform-gateway"
+  }
+
+  set {
+    name  = "extraArgs.gateway-namespace"
+    value = var.platform_ingress_namespace
+  }
+
   dynamic "set" {
     for_each = var.external_dns_domain_filters
     content {

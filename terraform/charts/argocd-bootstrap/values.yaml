@@ -1,5 +1,5 @@
 httproute:
-  parentGatewayName: public-gateway
+  parentGatewayName: platform-gateway
   parentGatewayNamespace: platform-ingress
 
 argocd:
