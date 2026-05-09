@@ -15,7 +15,7 @@ spec:
         namespaces:
           from: All
     - name: https
-      hostname: {{ .Values.gateway.hostname }}
+      hostname: {{ .Values.gateway.hostname | quote }}
       protocol: HTTPS
       port: 443
       tls:
