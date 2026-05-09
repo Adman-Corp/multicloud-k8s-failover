@@ -5,9 +5,9 @@ metadata:
   namespace: {{ .Values.argocd.namespace }}
 spec:
   parentRefs:
-    - name: {{ .Values.gateway.name }}
-      namespace: {{ .Values.gateway.namespace }}
-      sectionName: https-argocd
+    - name: {{ .Values.httproute.parentGatewayName }}
+      namespace: {{ .Values.httproute.parentGatewayNamespace }}
+      sectionName: https
   hostnames:
     - {{ .Values.argocd.hostname | quote }}
   rules:

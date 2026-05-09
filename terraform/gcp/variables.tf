@@ -67,6 +67,12 @@ variable "argocd_hostname" {
   default     = null
 }
 
+variable "platform_gateway_wildcard" {
+  description = "Wildcard hostname for the shared platform Gateway TLS listener"
+  type        = string
+  default     = null
+}
+
 variable "envoy_gateway_chart_version" {
   description = "Envoy Gateway Helm chart version"
   type        = string
