@@ -1,2 +1,9 @@
 gatewayClass:
   name: admancorp-envoy
+
+gateway:
+  name: public-gateway
+  namespace: platform-ingress
+  className: admancorp-envoy
+  hostname: "*.example.com"
+  clusterIssuer: letsencrypt-production

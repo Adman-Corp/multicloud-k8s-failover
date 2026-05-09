@@ -1,11 +1,12 @@
-location                = "eastus"
-resource_group_name     = "mc-aks-rg-dev"
-cluster_name            = "mc-aks-dev"
-kubernetes_version      = "1.35"
-argocd_hostname         = "argocd.az.admancorp.com"
-cert_manager_acme_email = "younesse.adman+azure@gmail.com"
+location                  = "eastus"
+resource_group_name       = "mc-aks-rg-dev"
+cluster_name              = "mc-aks-dev"
+kubernetes_version        = "1.35"
+argocd_hostname           = "argocd.plt.dev.az.admancorp.com"
+platform_gateway_wildcard = "*.plt.dev.az.admancorp.com"
+cert_manager_acme_email   = "younesse.adman+azure@gmail.com"
 
-node_count   = 1
+node_count   = 2
 node_vm_size = "Standard_DC2as_v5"
 
 vnet_name             = "mc-aks-vnet-dev"

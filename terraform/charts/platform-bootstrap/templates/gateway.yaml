@@ -3,14 +3,10 @@ kind: Gateway
 metadata:
   name: {{ .Values.gateway.name }}
   namespace: {{ .Values.gateway.namespace }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.gateway.clusterIssuer }}
 spec:
   gatewayClassName: {{ .Values.gateway.className }}
-  infrastructure:
-    parametersRef:
-      group: gateway.envoyproxy.io
-      kind: EnvoyProxy
-      name: {{ .Values.envoyProxy.name }}
-      namespace: {{ .Values.gateway.namespace }}
   listeners:
     - name: http
       protocol: HTTP
@@ -18,14 +14,12 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
-    - name: https-argocd
-      hostname: {{ .Values.argocd.hostname }}
+    - name: https
+      hostname: {{ .Values.gateway.hostname }}
       protocol: HTTPS
       port: 443
       tls:
-        certificateRefs:
-          - kind: Secret
-            name: {{ .Values.certificate.secretName }}
+        mode: Terminate
       allowedRoutes:
         namespaces:
           from: All

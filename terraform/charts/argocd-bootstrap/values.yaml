@@ -1,17 +1,6 @@
-certificate:
-  name: argocd-gateway-tls
-  secretName: argocd-gateway-tls
-  issuerRefName: letsencrypt-production
-  dnsName: argocd.example.com
-
-gateway:
-  name: public-gateway
-  namespace: platform-ingress
-  className: admancorp-envoy
-
-envoyProxy:
-  name: public-gateway-proxy
-  dnsHostname: argocd.example.com
+httproute:
+  parentGatewayName: public-gateway
+  parentGatewayNamespace: platform-ingress
 
 argocd:
   namespace: argocd

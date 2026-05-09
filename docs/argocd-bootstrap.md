@@ -11,9 +11,11 @@ Terraform installs the cluster bootstrap components before GitOps takes over.
 For the dev clusters this now includes `external-dns`, `cert-manager`, and
 `Envoy Gateway` before Argo CD in the `argocd` namespace. `cert-manager` is
 bootstrapped with a Cloudflare-backed DNS-01 `ClusterIssuer` for Let's
-Encrypt. Terraform also bootstraps the minimum Gateway API resources needed to
-make Argo CD reachable through Envoy: `GatewayClass`, one shared platform
-`Gateway`, one Argo CD `HTTPRoute`, and one Argo CD listener `Certificate`.
+Encrypt and Gateway API support enabled. Terraform also bootstraps the minimum
+Gateway API resources needed to make Argo CD reachable through Envoy:
+`GatewayClass`, one shared platform `Gateway`, and one Argo CD `HTTPRoute`.
+The `Gateway` is annotated so cert-manager issues the listener certificate
+directly from the HTTPS listener definition.
 
 The shared `GatewayClass` is platform bootstrap, not Argo CD-specific routing.
 It is installed separately from the Argo CD-specific Gateway and route
