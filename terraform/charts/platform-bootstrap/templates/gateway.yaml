@@ -20,6 +20,9 @@ spec:
       port: 443
       tls:
         mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: {{ .Values.gateway.tlsSecretName }}
       allowedRoutes:
         namespaces:
           from: All

@@ -7,3 +7,4 @@ gateway:
   className: admancorp-envoy
   hostname: "*.example.com"
   clusterIssuer: letsencrypt-production
+  tlsSecretName: platform-gateway-tls
