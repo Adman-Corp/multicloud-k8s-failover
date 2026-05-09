@@ -4,7 +4,9 @@ zone       = "us-central1-a"
 
 cluster_name            = "mc-gke"
 kubernetes_version      = "1.35"
-cert_manager_acme_email = "younesse.adman+gcp@gmail.com"
+cert_manager_acme_email   = "younesse.adman+gcp@gmail.com"
+argocd_hostname           = "argocd.plt.prod.gcp.admancorp.com"
+platform_gateway_wildcard = "*.plt.prod.gcp.admancorp.com"
 
 node_count        = 1
 node_machine_type = "e2-medium"
