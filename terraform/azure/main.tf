@@ -70,9 +70,10 @@ resource "azurerm_kubernetes_cluster" "main" {
   }
 
   default_node_pool {
-    name           = "default"
-    node_count     = var.node_count
-    vm_size        = var.node_vm_size
+    name                         = "default"
+    temporary_name_for_rotation  = "defaulttmp"
+    node_count                   = var.node_count
+    vm_size                      = var.node_vm_size
     vnet_subnet_id = azurerm_subnet.aks.id
     type           = "VirtualMachineScaleSets"
     os_sku         = "Ubuntu"
