@@ -1,3 +1,5 @@
+cloud: ""
+environment: ""
 httproute:
   parentGatewayName: platform-gateway
   parentGatewayNamespace: platform-ingress

@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: {{ .Values.argocd.namespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Adman-Corp/admancorp-argocd-apps.git
+    targetRevision: main
+    path: roots/{{ .Values.cloud }}-{{ .Values.environment }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .Values.argocd.namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

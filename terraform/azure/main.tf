@@ -372,6 +372,16 @@ resource "helm_release" "argocd_bootstrap" {
     value = var.argocd_hostname
   }
 
+  set {
+    name  = "cloud"
+    value = "azure"
+  }
+
+  set {
+    name  = "environment"
+    value = var.tags.Environment
+  }
+
   depends_on = [helm_release.platform_bootstrap, helm_release.argocd, helm_release.external_dns, kubernetes_namespace.platform_ingress]
 }
 

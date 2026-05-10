@@ -7,7 +7,7 @@ platform_gateway_wildcard = "*.plt.dev.az.admancorp.com"
 cert_manager_acme_email   = "younesse.adman+azure@gmail.com"
 
 node_count   = 2
-node_vm_size = "Standard_DC2as_v5"
+node_vm_size = "Standard_EC2ads_v5"
 
 vnet_name             = "mc-aks-vnet-dev"
 subnet_name           = "mc-aks-subnet-dev"
