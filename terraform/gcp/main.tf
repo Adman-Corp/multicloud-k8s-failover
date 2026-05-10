@@ -251,6 +251,11 @@ resource "helm_release" "external_dns" {
   }
 
   set {
+    name  = "sources[1]"
+    value = "service"
+  }
+
+  set {
     name  = "extraArgs.gateway-name"
     value = "platform-gateway"
   }

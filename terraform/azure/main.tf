@@ -182,6 +182,16 @@ resource "helm_release" "external_dns" {
   }
 
   set {
+    name  = "sources[0]"
+    value = "gateway-httproute"
+  }
+
+  set {
+    name  = "sources[1]"
+    value = "service"
+  }
+
+  set {
     name  = "policy"
     value = "upsert-only"
   }
@@ -194,11 +204,6 @@ resource "helm_release" "external_dns" {
   set {
     name  = "txtOwnerId"
     value = azurerm_kubernetes_cluster.main.name
-  }
-
-  set {
-    name  = "sources[0]"
-    value = "gateway-httproute"
   }
 
   set {
