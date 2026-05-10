@@ -70,13 +70,13 @@ resource "azurerm_kubernetes_cluster" "main" {
   }
 
   default_node_pool {
-    name                         = "default"
-    temporary_name_for_rotation  = "defaulttmp"
-    node_count                   = var.node_count
-    vm_size                      = var.node_vm_size
-    vnet_subnet_id = azurerm_subnet.aks.id
-    type           = "VirtualMachineScaleSets"
-    os_sku         = "Ubuntu"
+    name                        = "default"
+    temporary_name_for_rotation = "defaulttmp"
+    node_count                  = var.node_count
+    vm_size                     = var.node_vm_size
+    vnet_subnet_id              = azurerm_subnet.aks.id
+    type                        = "VirtualMachineScaleSets"
+    os_sku                      = "Ubuntu"
     upgrade_settings {
       max_surge                     = "10%"
       drain_timeout_in_minutes      = 0
