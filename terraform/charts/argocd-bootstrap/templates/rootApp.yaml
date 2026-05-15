@@ -8,7 +8,11 @@ spec:
   source:
     repoURL: https://github.com/Adman-Corp/admancorp-argocd-apps.git
     targetRevision: main
-    path: roots/{{ .Values.cloud }}-{{ .Values.environment }}
+    path: charts/argocd-apps
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-{{ .Values.cloud }}-{{ .Values.environment }}.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: {{ .Values.argocd.namespace }}
